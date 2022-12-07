@@ -1,47 +1,47 @@
 import simpy
-import generators as gen
+import generators as gen #generators is a code included in the release
 import numpy as np
 import datetime
 
 def main():
     
-    for priority in ["FIFO", "SJF"]:
+    for priority in ["FIFO", "SJF"]: # here the two priorities will be executed
         print("Processing MMn with priority {}".format(priority))
-        MGn("M",priority)
+        MGn("M",priority) # memoryless processes at service for two priorities
         print('\n\n\n')
         
     print("Processing MDn")
-    MGn("D", "FIFO")
+    MGn("D", "FIFO") #deterministic process at service for FIFO discipline
     print('\n\n\n')
     
     
-    print("Processing long tail")
-    MGn("LT", "FIFO")
+    print("Processing long tail") # long tail at service time
+    MGn("LT", "FIFO") 
     print('\n\n\n')
 
 def MGn(sampling, priority):
-    baseLambda = 1
-    rhos = [0.8,0.9,0.95]
+    baseLambda = 1 #arrival rate 
+    rhos = [0.8,0.9,0.95] #system loads near 1
     
-    serverNumbers = [1,2,4]
-    runtime = 25*baseLambda
-    e = 0.005
+    serverNumbers = [1,2,4] #number of servers
+    runtime = 25*baseLambda #duration of the run
+    e = 0.005 #standar deviation desired for the simulation
     
     for rho in rhos: 
         for n in serverNumbers:
                         
-            env = simpy.Environment()
+            env = simpy.Environment() #generate the enviroment of discrete events
             start = datetime.datetime.now()
             
-            mu = baseLambda/rho
-            lambd = n*baseLambda
+            mu = baseLambda/rho #capacity of the server for each load in rhos
+            lambd = n*baseLambda #load of the system for each number of servers in serverNumbers
             
             print("The number of servers is now {}, load is {:.2f}".format(n,lambd/(n*mu)))
             
-            server = simpy.PriorityResource(env, capacity = n)
+            server = simpy.PriorityResource(env, capacity = n) #initalization of the Resource or servers
             
-            gen.queueTimes = []
-            env.process(gen.arrival(env, lambd, mu, server, sampling, priority))
+            gen.queueTimes = [] # see the generator.py file, where queueTimes is a global variable. Here we initialize it as an empty array
+            env.process(gen.arrival(env, lambd, mu, server, sampling, priority)) #process of and activity
             env.run(until=runtime)
             mean = np.mean(gen.queueTimes)
             
@@ -54,7 +54,7 @@ def MGn(sampling, priority):
             
             std = 1
             
-            while j < 99 or std > e:
+            while j < 99 or std > e: #loop to reach the desired standat deviation
                 
                 j+= 1
                 
@@ -62,7 +62,7 @@ def MGn(sampling, priority):
                 
                 print('\r Processed {} out of at least 100, std is {:.3f}, elapsed time is {}'.format(j+1,std,elapsed),end=' ')
                 
-                env = simpy.Environment()
+                env = simpy.Environment() #generate the enviroment of discrete events
                 
                 server = simpy.PriorityResource(env, capacity = n)
                 gen.queueTimes = []
